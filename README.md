@@ -2,10 +2,10 @@
 Smart home on PyQt6
 
 ## Key Features:
-* Turn lights on and off in different rooms, adjust brightness and create a lighting schedule
-* Temperature regulation in different areas of the house using an integrated thermostat
-* Ability to monitor and manage video surveillance system, burglary notifications and access control
-* The ability to control devices in the home via the internet from anywhere in the world
+* Turns the light in the room on and off, adjusts brightness
+* Home temperature regulation with built-in thermostat
+* Ability to control the video surveillance system, disable or enable the system
+* Remote device management
 
 ## Technology Stack:
 * PyQt6 
