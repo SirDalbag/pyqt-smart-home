@@ -1,22 +1,26 @@
 from PyQt6 import uic
-from PyQt6.QtWidgets import QWidget, QMessageBox
+from PyQt6.QtWidgets import QWidget, QListWidgetItem
 import threading
-from datetime import datetime
-import time
+from core import get_objs, id, db, table, columns
+from model import Database
 
 
 class Ui(QWidget):
     def __init__(self):
         super().__init__()
         self.ui = uic.loadUi("desktop/src/main.ui", self)
-        self.__alive = True
         self.show()
+        self.init()
         self.setup()
-        self.thread(self.display_time)
+        self.thread(self.view)
 
     def setup(self):
-        self.temperature_up.clicked.connect(lambda: self.update_temperature(1))
-        self.temperature_down.clicked.connect(lambda: self.update_temperature(-1))
+        self.temp_up.clicked.connect(lambda: self.update("temp_plan", 1))
+        self.temp_down.clicked.connect(lambda: self.update("temp_plan", -1))
+        self.light_on.clicked.connect(lambda: self.update("light", True))
+        self.light_off.clicked.connect(lambda: self.update("light", False))
+        self.security_on.clicked.connect(lambda: self.update("security", True))
+        self.security_off.clicked.connect(lambda: self.update("security", False))
 
     def thread(self, func):
         thread = threading.Thread(target=lambda: self.exception(func))
@@ -26,17 +30,46 @@ class Ui(QWidget):
         try:
             func()
         except Exception as error:
-            if self.ui.status:
-                self.status.setText(f"Status: {str(error)}")
+            self.device_view.clear()
+            self.device_view.addItem(QListWidgetItem(str(error)))
 
-    def display_time(self):
-        while True:
-            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.time.setText(f"{str(current_time)}")
-            time.sleep(1)
-
-    def update_temperature(self, value):
-        temperature_value = int(self.temperature_plan.text()) + value
-        self.temperature_plan.setText(
-            f"+{temperature_value}" if temperature_value > 0 else f"{temperature_value}"
+    def init(self):
+        Database.create(
+            db=db,
+            table=table,
+            columns=columns,
+            types=["INTEGER", "INTEGER", "BOOLEAN", "BOOLEAN"],
         )
+        if (
+            Database.query(
+                db=db, sql=f"SELECT COUNT(*) FROM {table}", args=(), many=False
+            )[0]
+            == 0
+        ):
+            Database.insert(
+                db=db, table=table, columns=columns, values=[0, 0, False, True]
+            )
+        self.thread(self.view)
+
+    def view(self):
+        for i in sorted(
+            get_objs(Database.select(db=db, table=table, columns=columns)),
+            key=lambda obj: obj.id,
+        ):
+            self.device_view.clear()
+            self.device_view.addItem(QListWidgetItem(str(i)))
+
+    def get(self, column):
+        return Database.select(db=db, table=table, columns=[column], id=id)[1]
+
+    def update(self, column, value):
+        if "temp" in column:
+            value = self.get(column) + value
+        Database.update(
+            db=db,
+            table=table,
+            columns=[column],
+            values=[value],
+            id=id,
+        )
+        self.thread(self.view)
