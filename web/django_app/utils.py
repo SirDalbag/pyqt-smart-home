@@ -1,28 +1,6 @@
 import sqlite3
 
 
-class Device:
-    def __init__(
-        self,
-        id: int,
-        temp_fact: int,
-        temp_plan: int,
-        light: bool,
-        security: bool,
-    ):
-        self.id = id
-        self.temp_fact = temp_fact
-        self.temp_plan = temp_plan
-        self.light = light
-        self.security = security
-
-    def __repr__(self) -> str:
-        return f"""
-Temperature Fact: {self.temp_fact}°C | Temperature Plan: {self.temp_plan}°C
-Light - {"On" if self.light else "Off"} | Security - {"On" if self.security else "Off"}
-"""
-
-
 class Database:
     @staticmethod
     def query(
@@ -71,7 +49,7 @@ class Database:
     ) -> list[tuple]:
         return Database.query(
             db=db,
-            sql="INSERT OR REPLACE INTO {} ({}) VALUES ({})".format(
+            sql="INSERT INTO {} ({}) VALUES ({})".format(
                 table, ", ".join(columns), ", ".join(["?" for _ in values])
             ),
             args=values,

@@ -2,7 +2,7 @@ import concurrent.futures
 from model import Device
 
 id = 1
-db = "desktop/database/data.db"
+db = "desktop/database/local.db"
 table = "device"
 columns = ["temp_fact", "temp_plan", "light", "security"]
 

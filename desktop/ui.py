@@ -3,6 +3,8 @@ from PyQt6.QtWidgets import QWidget, QListWidgetItem
 import threading
 from core import get_objs, id, db, table, columns
 from model import Database
+import requests
+import time
 
 
 class Ui(QWidget):
@@ -13,6 +15,8 @@ class Ui(QWidget):
         self.init()
         self.setup()
         self.thread(self.view)
+        self.thread(self.get_web)
+        self.thread(self.post_web)
 
     def setup(self):
         self.temp_up.clicked.connect(lambda: self.update("temp_plan", 1))
@@ -61,6 +65,36 @@ class Ui(QWidget):
 
     def get(self, column):
         return Database.select(db=db, table=table, columns=[column], id=id)[1]
+
+    def get_json(self):
+        return dict(
+            zip(
+                ["id"] + columns,
+                Database.select(db=db, table=table, columns=columns, id=id),
+            )
+        )
+
+    def get_web(self):
+        while True:
+            response = requests.get(url="http://127.0.0.1:8000/api/")
+            data = response.json()
+            Database.insert(
+                db=db,
+                table=table,
+                columns=["id"] + columns,
+                values=[data[x] for x in columns],
+            )
+            self.thread(self.view)
+            time.sleep(5)
+
+    def post_web(self):
+        while True:
+            response = requests.post(
+                url="http://127.0.0.1:8000/api/",
+                json={"data": self.get_json()},
+            )
+            print(response.status_code)
+            time.sleep(5)
 
     def update(self, column, value):
         if "temp" in column:
